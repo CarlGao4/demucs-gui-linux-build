@@ -70,8 +70,8 @@ jobs:
         run: |
           cp -r Demucs-Gui/GUI/ ./Demucs-GUI.AppDir/GUI
           cd ./Demucs-GUI.AppDir/GUI
-          find . -type f ! -name '*.py' -delete
-          find . -type d -empty -delete
+          find . -type f ! -name '*.py' | xargs rm -rf
+          find . -type d -empty | xargs rm -rf
           cp -r ../../Demucs-Gui/fonts/ ./fonts
           cp -r ../../Demucs-Gui/icon/ ./icon
           mkdir pretrained
@@ -84,22 +84,168 @@ jobs:
           sed -i 's/RELEASE_VERSION/${{ github.event.inputs.version }}/' ./Demucs-GUI.AppDir/usr/share/metainfo/demucs-gui.appdata.xml
           sed -i "s/RELEASE_DATE/$(date -u +%Y-%m-%d)/" ./Demucs-GUI.AppDir/usr/share/metainfo/demucs-gui.appdata.xml
           appstreamcli validate ./Demucs-GUI.AppDir/usr/share/metainfo/demucs-gui.appdata.xml || true
-          find ./Demucs-GUI.AppDir -name '*.pyc' -delete
-          find ./Demucs-GUI.AppDir -name '__pycache__' -delete
-          find ./Demucs-GUI.AppDir -name '*.dist-info' -delete
-          find ./Demucs-GUI.AppDir -name '*.egg-info' -delete
-          find ./Demucs-GUI.AppDir -name '*.a' -delete
+          find ./Demucs-GUI.AppDir -name '*.pyc' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '__pycache__' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '*.dist-info' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '*.egg-info' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '*.a' | xargs rm -rf
 
       - name: Pack Demucs GUI
         run: |
           curl -JLO https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
           chmod +x appimagetool-x86_64.AppImage
-          ./appimagetool-x86_64.AppImage Demucs-GUI.AppDir -n "Demucs_GUI-x86_64-${{ github.event.inputs.version }}.AppImage"
+          ./appimagetool-x86_64.AppImage Demucs-GUI.AppDir -n "Demucs_GUI-x86_64-${{ github.event.inputs.version }}-cpu.AppImage"
           rm -rf Demucs-GUI.AppDir
           xz -z -7 -T0 Demucs_GUI-x86_64*.AppImage
 
       - name: Upload Demucs GUI
         uses: actions/upload-artifact@v4
         with:
-          name: Demucs-GUI
+          name: Demucs-GUI-CPU
+          path: ./Demucs_GUI-x86_64*.xz
+
+  build-cuda:
+    runs-on: ubuntu-20.04
+    name: Build Demucs-GUI Linux CUDA
+    if: ${{ github.event.inputs.cuda == 'true' }}
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - name: Checkout current repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          path: 'build-repo'
+
+      - name: Checkout Demucs GUI
+        uses: actions/checkout@v4
+        with:
+          repository: 'CarlGao4/Demucs-Gui'
+          ref: ${{ github.event.inputs.commit }}
+          fetch-depth: 1
+          submodules: 'recursive'
+          path: 'Demucs-Gui'
+
+      - name: Download base image
+        run: |
+          curl -JLO https://github.com/CarlGao4/demucs-gui-linux-build/releases/download/env-base/Demucs-GUI-base.AppImage
+          chmod +x Demucs-GUI-base.AppImage
+          ./Demucs-GUI-base.AppImage --appimage-extract
+          mv squashfs-root Demucs-GUI.AppDir
+
+      - name: Install dependencies
+        run: |
+          ./Demucs-GUI.AppDir/opt/python3.11/bin/python3.11 -s -m pip install -r Demucs-Gui/requirements_cuda.txt
+          ./Demucs-GUI.AppDir/opt/python3.11/bin/python3.11 -s -m pip cache purge
+
+      - name: Prepare data
+        run: |
+          cp -r Demucs-Gui/GUI/ ./Demucs-GUI.AppDir/GUI
+          cd ./Demucs-GUI.AppDir/GUI
+          find . -type f ! -name '*.py' | xargs rm -rf
+          find . -type d -empty | xargs rm -rf
+          cp -r ../../Demucs-Gui/fonts/ ./fonts
+          cp -r ../../Demucs-Gui/icon/ ./icon
+          mkdir pretrained
+          cp ../../build-repo/htdemucs.yaml ./pretrained/htdemucs.yaml
+          curl -JL https://dl.fbaipublicfiles.com/demucs/hybrid_transformer/955717e8-8726e21a.th -o ./pretrained/955717e8-8726e21a.th
+          sudo apt install appstream
+
+      - name: Finalize
+        run: |
+          sed -i 's/RELEASE_VERSION/${{ github.event.inputs.version }}/' ./Demucs-GUI.AppDir/usr/share/metainfo/demucs-gui.appdata.xml
+          sed -i "s/RELEASE_DATE/$(date -u +%Y-%m-%d)/" ./Demucs-GUI.AppDir/usr/share/metainfo/demucs-gui.appdata.xml
+          appstreamcli validate ./Demucs-GUI.AppDir/usr/share/metainfo/demucs-gui.appdata.xml || true
+          find ./Demucs-GUI.AppDir -name '*.pyc' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '__pycache__' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '*.dist-info' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '*.egg-info' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '*.a' | xargs rm -rf
+
+      - name: Pack Demucs GUI
+        run: |
+          curl -JLO https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool-x86_64.AppImage
+          ./appimagetool-x86_64.AppImage Demucs-GUI.AppDir -n "Demucs_GUI-x86_64-${{ github.event.inputs.version }}-cuda.AppImage"
+          rm -rf Demucs-GUI.AppDir
+          xz -z -7 -T0 Demucs_GUI-x86_64*.AppImage
+
+      - name: Upload Demucs GUI
+        uses: actions/upload-artifact@v4
+        with:
+          name: Demucs-GUI-CUDA
+          path: ./Demucs_GUI-x86_64*.xz
+
+  build-rocm:
+    runs-on: ubuntu-20.04
+    name: Build Demucs-GUI Linux ROCm
+    if: ${{ github.event.inputs.rocm == 'true' }}
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - name: Checkout current repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          path: 'build-repo'
+
+      - name: Checkout Demucs GUI
+        uses: actions/checkout@v4
+        with:
+          repository: 'CarlGao4/Demucs-Gui'
+          ref: ${{ github.event.inputs.commit }}
+          fetch-depth: 1
+          submodules: 'recursive'
+          path: 'Demucs-Gui'
+
+      - name: Download base image
+        run: |
+          curl -JLO https://github.com/CarlGao4/demucs-gui-linux-build/releases/download/env-base/Demucs-GUI-base.AppImage
+          chmod +x Demucs-GUI-base.AppImage
+          ./Demucs-GUI-base.AppImage --appimage-extract
+          mv squashfs-root Demucs-GUI.AppDir
+
+      - name: Install dependencies
+        run: |
+          ./Demucs-GUI.AppDir/opt/python3.11/bin/python3.11 -s -m pip install -r Demucs-Gui/requirements_rocm.txt
+          ./Demucs-GUI.AppDir/opt/python3.11/bin/python3.11 -s -m pip cache purge
+
+      - name: Prepare data
+        run: |
+          cp -r Demucs-Gui/GUI/ ./Demucs-GUI.AppDir/GUI
+          cd ./Demucs-GUI.AppDir/GUI
+          find . -type f ! -name '*.py' | xargs rm -rf
+          find . -type d -empty | xargs rm -rf
+          cp -r ../../Demucs-Gui/fonts/ ./fonts
+          cp -r ../../Demucs-Gui/icon/ ./icon
+          mkdir pretrained
+          cp ../../build-repo/htdemucs.yaml ./pretrained/htdemucs.yaml
+          curl -JL https://dl.fbaipublicfiles.com/demucs/hybrid_transformer/955717e8-8726e21a.th -o ./pretrained/955717e8-8726e21a.th
+          sudo apt install appstream
+
+      - name: Finalize
+        run: |
+          sed -i 's/RELEASE_VERSION/${{ github.event.inputs.version }}/' ./Demucs-GUI.AppDir/usr/share/metainfo/demucs-gui.appdata.xml
+          sed -i "s/RELEASE_DATE/$(date -u +%Y-%m-%d)/" ./Demucs-GUI.AppDir/usr/share/metainfo/demucs-gui.appdata.xml
+          appstreamcli validate ./Demucs-GUI.AppDir/usr/share/metainfo/demucs-gui.appdata.xml || true
+          find ./Demucs-GUI.AppDir -name '*.pyc' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '__pycache__' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '*.dist-info' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '*.egg-info' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '*.a' | xargs rm -rf
+
+      - name: Pack Demucs GUI
+        run: |
+          curl -JLO https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool-x86_64.AppImage
+          ./appimagetool-x86_64.AppImage Demucs-GUI.AppDir -n "Demucs_GUI-x86_64-${{ github.event.inputs.version }}-rocm.AppImage"
+          rm -rf Demucs-GUI.AppDir
+          xz -z -7 -T0 Demucs_GUI-x86_64*.AppImage
+
+      - name: Upload Demucs GUI
+        uses: actions/upload-artifact@v4
+        with:
+          name: Demucs-GUI-ROCM
           path: ./Demucs_GUI-x86_64*.xz
