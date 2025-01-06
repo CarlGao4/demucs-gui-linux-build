@@ -26,6 +26,11 @@ on:
         required: true
         default: false
         type: boolean
+      optimize:
+        description: 'Use symbolic link to save space cost by duplicating files'
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -53,6 +58,11 @@ jobs:
           fetch-depth: 1
           submodules: 'recursive'
           path: 'Demucs-Gui'
+
+      - uses: actions/setup-python@v5
+        if: ${{ github.event.inputs.optimize == 'true' }}
+        with:
+          python-version: '3.11'
 
       - name: Download base image
         run: |
@@ -84,11 +94,20 @@ jobs:
           sed -i 's/RELEASE_VERSION/${{ github.event.inputs.version }}/' ./Demucs-GUI.AppDir/usr/share/metainfo/demucs-gui.appdata.xml
           sed -i "s/RELEASE_DATE/$(date -u +%Y-%m-%d)/" ./Demucs-GUI.AppDir/usr/share/metainfo/demucs-gui.appdata.xml
           appstreamcli validate ./Demucs-GUI.AppDir/usr/share/metainfo/demucs-gui.appdata.xml || true
+      
+      - name: Optimize size
+        run: |
           find ./Demucs-GUI.AppDir -name '*.pyc' | xargs rm -rf
           find ./Demucs-GUI.AppDir -name '__pycache__' | xargs rm -rf
           find ./Demucs-GUI.AppDir -name '*.dist-info' | xargs rm -rf
           find ./Demucs-GUI.AppDir -name '*.egg-info' | xargs rm -rf
           find ./Demucs-GUI.AppDir -name '*.a' | xargs rm -rf
+      
+      - name: Link duplicate files
+        if: ${{ github.event.inputs.optimize == 'true' }}
+        run: |
+          python3 -m pip install tqdm
+          python3 ./build-repo/ln_optimize.py ./Demucs-GUI.AppDir -y -j4
 
       - name: Pack Demucs GUI
         run: |
@@ -127,6 +146,11 @@ jobs:
           submodules: 'recursive'
           path: 'Demucs-Gui'
 
+      - uses: actions/setup-python@v5
+        if: ${{ github.event.inputs.optimize == 'true' }}
+        with:
+          python-version: '3.11'
+
       - name: Download base image
         run: |
           curl -JLO https://github.com/CarlGao4/demucs-gui-linux-build/releases/download/env-base/Demucs-GUI-base.AppImage
@@ -157,11 +181,20 @@ jobs:
           sed -i 's/RELEASE_VERSION/${{ github.event.inputs.version }}/' ./Demucs-GUI.AppDir/usr/share/metainfo/demucs-gui.appdata.xml
           sed -i "s/RELEASE_DATE/$(date -u +%Y-%m-%d)/" ./Demucs-GUI.AppDir/usr/share/metainfo/demucs-gui.appdata.xml
           appstreamcli validate ./Demucs-GUI.AppDir/usr/share/metainfo/demucs-gui.appdata.xml || true
+      
+      - name: Optimize size
+        run: |
           find ./Demucs-GUI.AppDir -name '*.pyc' | xargs rm -rf
           find ./Demucs-GUI.AppDir -name '__pycache__' | xargs rm -rf
           find ./Demucs-GUI.AppDir -name '*.dist-info' | xargs rm -rf
           find ./Demucs-GUI.AppDir -name '*.egg-info' | xargs rm -rf
           find ./Demucs-GUI.AppDir -name '*.a' | xargs rm -rf
+      
+      - name: Link duplicate files
+        if: ${{ github.event.inputs.optimize == 'true' }}
+        run: |
+          python3 -m pip install tqdm
+          python3 ./build-repo/ln_optimize.py ./Demucs-GUI.AppDir -y -j4
 
       - name: Pack Demucs GUI
         run: |
@@ -200,6 +233,11 @@ jobs:
           submodules: 'recursive'
           path: 'Demucs-Gui'
 
+      - uses: actions/setup-python@v5
+        if: ${{ github.event.inputs.optimize == 'true' }}
+        with:
+          python-version: '3.11'
+
       - name: Download base image
         run: |
           curl -JLO https://github.com/CarlGao4/demucs-gui-linux-build/releases/download/env-base/Demucs-GUI-base.AppImage
@@ -230,11 +268,20 @@ jobs:
           sed -i 's/RELEASE_VERSION/${{ github.event.inputs.version }}/' ./Demucs-GUI.AppDir/usr/share/metainfo/demucs-gui.appdata.xml
           sed -i "s/RELEASE_DATE/$(date -u +%Y-%m-%d)/" ./Demucs-GUI.AppDir/usr/share/metainfo/demucs-gui.appdata.xml
           appstreamcli validate ./Demucs-GUI.AppDir/usr/share/metainfo/demucs-gui.appdata.xml || true
+      
+      - name: Optimize size
+        run: |
           find ./Demucs-GUI.AppDir -name '*.pyc' | xargs rm -rf
           find ./Demucs-GUI.AppDir -name '__pycache__' | xargs rm -rf
           find ./Demucs-GUI.AppDir -name '*.dist-info' | xargs rm -rf
           find ./Demucs-GUI.AppDir -name '*.egg-info' | xargs rm -rf
           find ./Demucs-GUI.AppDir -name '*.a' | xargs rm -rf
+      
+      - name: Link duplicate files
+        if: ${{ github.event.inputs.optimize == 'true' }}
+        run: |
+          python3 -m pip install tqdm
+          python3 ./build-repo/ln_optimize.py ./Demucs-GUI.AppDir -y -j4
 
       - name: Pack Demucs GUI
         run: |
