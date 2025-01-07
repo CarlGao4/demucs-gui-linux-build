@@ -48,13 +48,10 @@ jobs:
     strategy:
       matrix:
         build_type: [cpu, cuda, rocm]
-        include:
-          - build_type: cpu
-            condition: ${{ github.event.inputs.cpu == 'true' }}
-          - build_type: cuda
-            condition: ${{ github.event.inputs.cuda == 'true' }}
-          - build_type: rocm
-            condition: ${{ github.event.inputs.rocm == 'true' }}
+        exclude:
+          - build_type: ${{ github.event.inputs.cpu == 'false' && 'cpu' }}
+          - build_type: ${{ github.event.inputs.cuda == 'false' && 'cuda' }}
+          - build_type: ${{ github.event.inputs.rocm == 'false' && 'rocm' }}
       fail-fast: false
     name: Build Demucs-GUI Linux ${{ matrix.build_type }}
     runs-on: ubuntu-20.04
@@ -62,10 +59,6 @@ jobs:
       run:
         shell: bash -el {0}
     steps:
-      - name: Check condition
-        uses: action-pack/cancel@v1
-        if: ${{ matrix.condition == false }}
-
       - name: Checkout current repository
         uses: actions/checkout@v4
         with:
