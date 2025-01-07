@@ -31,6 +31,14 @@ on:
         required: true
         default: false
         type: boolean
+      compression:
+        description: 'Compression method'
+        required: true
+        type: choice
+        default: 'zstd'
+        options:
+          - 'zstd'
+          - 'xz'
 
 permissions:
   contents: write
@@ -104,6 +112,10 @@ jobs:
           find ./Demucs-GUI.AppDir -name '*.dist-info' | xargs rm -rf
           find ./Demucs-GUI.AppDir -name '*.egg-info' | xargs rm -rf
           find ./Demucs-GUI.AppDir -name '*.a' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '*.c' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '*.h' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '*.cpp' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -type d -empty | xargs rm -rf
 
       - name: Link duplicate files
         if: ${{ github.event.inputs.optimize == 'true' }}
@@ -111,10 +123,19 @@ jobs:
           python3 -m pip install tqdm
           python3 ./build-repo/ln_optimize.py ./Demucs-GUI.AppDir -y -j4
 
+      - name: Create squashfs (ZSTD)
+        if: ${{ github.event.inputs.compression == 'zstd' }}
+        run: |
+          mksquashfs ./Demucs-GUI.AppDir squash.squashfs -root-owned -noappend -comp zstd -mem 8G -b 1M -Xcompression-level 22
+
+      - name: Create squashfs (XZ)
+        if: ${{ github.event.inputs.compression == 'xz' }}
+        run: |
+          mksquashfs ./Demucs-GUI.AppDir squash.squashfs -root-owned -noappend -comp xz -mem 8G -b 1M -Xdict-size 100%
+
       - name: Pack Demucs GUI
         run: |
           curl -JLO https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64
-          mksquashfs ./Demucs-GUI.AppDir squash.squashfs -root-owned -noappend -comp zstd -mem 8G -b 1M -Xcompression-level 22
           rm -rf Demucs-GUI.AppDir
           cat runtime-x86_64 squash.squashfs > Demucs_GUI-x86_64-${{ github.event.inputs.version }}-cpu.AppImage
           rm squash.squashfs
@@ -195,6 +216,10 @@ jobs:
           find ./Demucs-GUI.AppDir -name '*.dist-info' | xargs rm -rf
           find ./Demucs-GUI.AppDir -name '*.egg-info' | xargs rm -rf
           find ./Demucs-GUI.AppDir -name '*.a' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '*.c' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '*.h' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '*.cpp' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -type d -empty | xargs rm -rf
 
       - name: Link duplicate files
         if: ${{ github.event.inputs.optimize == 'true' }}
@@ -202,10 +227,19 @@ jobs:
           python3 -m pip install tqdm
           python3 ./build-repo/ln_optimize.py ./Demucs-GUI.AppDir -y -j4
 
+      - name: Create squashfs (ZSTD)
+        if: ${{ github.event.inputs.compression == 'zstd' }}
+        run: |
+          mksquashfs ./Demucs-GUI.AppDir squash.squashfs -root-owned -noappend -comp zstd -mem 8G -b 1M -Xcompression-level 22
+
+      - name: Create squashfs (XZ)
+        if: ${{ github.event.inputs.compression == 'xz' }}
+        run: |
+          mksquashfs ./Demucs-GUI.AppDir squash.squashfs -root-owned -noappend -comp xz -mem 8G -b 1M -Xdict-size 100%
+
       - name: Pack Demucs GUI
         run: |
           curl -JLO https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64
-          mksquashfs ./Demucs-GUI.AppDir squash.squashfs -root-owned -noappend -comp zstd -mem 8G -b 1M -Xcompression-level 22
           rm -rf Demucs-GUI.AppDir
           cat runtime-x86_64 squash.squashfs > Demucs_GUI-x86_64-${{ github.event.inputs.version }}-cuda.AppImage
           rm squash.squashfs
@@ -286,6 +320,10 @@ jobs:
           find ./Demucs-GUI.AppDir -name '*.dist-info' | xargs rm -rf
           find ./Demucs-GUI.AppDir -name '*.egg-info' | xargs rm -rf
           find ./Demucs-GUI.AppDir -name '*.a' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '*.c' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '*.h' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -name '*.cpp' | xargs rm -rf
+          find ./Demucs-GUI.AppDir -type d -empty | xargs rm -rf
 
       - name: Link duplicate files
         if: ${{ github.event.inputs.optimize == 'true' }}
@@ -293,10 +331,19 @@ jobs:
           python3 -m pip install tqdm
           python3 ./build-repo/ln_optimize.py ./Demucs-GUI.AppDir -y -j4
 
+      - name: Create squashfs (ZSTD)
+        if: ${{ github.event.inputs.compression == 'zstd' }}
+        run: |
+          mksquashfs ./Demucs-GUI.AppDir squash.squashfs -root-owned -noappend -comp zstd -mem 8G -b 1M -Xcompression-level 22
+
+      - name: Create squashfs (XZ)
+        if: ${{ github.event.inputs.compression == 'xz' }}
+        run: |
+          mksquashfs ./Demucs-GUI.AppDir squash.squashfs -root-owned -noappend -comp xz -mem 8G -b 1M -Xdict-size 100%
+
       - name: Pack Demucs GUI
         run: |
           curl -JLO https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64
-          mksquashfs ./Demucs-GUI.AppDir squash.squashfs -root-owned -noappend -comp zstd -mem 8G -b 1M -Xcompression-level 22
           rm -rf Demucs-GUI.AppDir
           cat runtime-x86_64 squash.squashfs > Demucs_GUI-x86_64-${{ github.event.inputs.version }}-rocm.AppImage
           rm squash.squashfs
