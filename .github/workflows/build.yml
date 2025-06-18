@@ -54,7 +54,7 @@ jobs:
           - build_type: ${{ github.event.inputs.rocm == 'false' && 'rocm' }}
       fail-fast: false
     name: Build Demucs-GUI Linux ${{ matrix.build_type }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     defaults:
       run:
         shell: bash -el {0}
