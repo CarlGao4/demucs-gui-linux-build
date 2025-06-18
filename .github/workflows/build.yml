@@ -104,6 +104,7 @@ jobs:
           mkdir pretrained
           cp ../../build-repo/htdemucs.yaml ./pretrained/htdemucs.yaml
           curl -JL https://dl.fbaipublicfiles.com/demucs/hybrid_transformer/955717e8-8726e21a.th -o ./pretrained/955717e8-8726e21a.th
+          curl -JL https://huggingface.co/JusperLee/Apollo/resolve/main/pytorch_model.bin -o ./pretrained/pytorch_model.bin
           sudo apt install appstream
 
       - name: Finalize
